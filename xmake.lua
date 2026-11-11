@@ -1,4 +1,22 @@
-add_requires("pybind11")
+option("songshan-offline")
+    set_default(false)
+    set_showmenu(true)
+    set_description("Use the preinstalled Python and pybind11 headers for the Songshan H3 build")
+option_end()
+
+if has_config("songshan-offline") then
+    local pybind11_include = os.getenv("SONGSHAN_PYBIND11_INCLUDE")
+    local python_include = os.getenv("SONGSHAN_PYTHON_INCLUDE")
+    if not pybind11_include or not os.isfile(path.join(pybind11_include, "pybind11", "pybind11.h")) then
+        raise("Set SONGSHAN_PYBIND11_INCLUDE to the installed pybind11 include directory")
+    end
+    if not python_include or not os.isfile(path.join(python_include, "Python.h")) then
+        raise("Set SONGSHAN_PYTHON_INCLUDE to the Python include directory")
+    end
+    add_includedirs(pybind11_include, python_include)
+else
+    add_requires("pybind11")
+end
 
 set_toolchains("gcc")
 
@@ -22,7 +40,9 @@ add_includedirs("third_party/spdlog/include")
 add_includedirs("third_party/json/single_include/")
 
 target("_infinilm")
-    add_packages("pybind11")
+    if not has_config("songshan-offline") then
+        add_packages("pybind11")
+    end
     set_default(false)
     add_rules("python.module", {soabi = true})
     set_languages("cxx17")
